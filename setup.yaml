@@ -1,0 +1,190 @@
+---
+  - name: Downloading files
+    hosts: localhost
+    vars_files:
+        - vars.yaml
+    tasks:
+       - name: Downloading dotfiles
+         git:
+            repo: 'https://github.com/Grz3hu/Dotfiles'
+            dest: "{{ destdir }}/dotfiles"
+         tags: dotfiles
+
+       - name: Downloading dwm
+         git:
+            repo: 'https://github.com/Grz3hu/dwm'
+            dest: "{{ destdir }}/dwm"
+         tags: dwm
+
+       - name: Downloading st
+         git:
+            repo: 'https://github.com/Grz3hu/st'
+            dest: "{{ destdir }}/st"
+         tags: st
+
+       - name: Downloading dmenu
+         git:
+            repo: 'https://github.com/Grz3hu/dmenu'
+            dest: "{{ destdir }}/dmenu"
+         tags: dmenu
+
+       - name: Downloading ibhagwans picom fork
+         git:
+            repo: 'https://github.com/ibhagwan/picom'
+            dest: "{{ destdir }}/picom"
+            version: next-rebase
+            depth: 1
+         tags: picom
+
+       - name: Making fonts directory
+         file: 
+            state: directory 
+            path: "{{ destdir }}/fonts"
+         tags: [ dwm, st ]
+
+       - name: Downloading Mononoki font
+         get_url: 
+            url: https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Mononoki.zip 
+            dest: "{{ destdir }}/fonts/Mononoki.zip"
+         tags: [ dwm, st ]
+
+       - name: Downloading Inconsolata font
+         get_url: 
+            url: https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Inconsolata.zip 
+            dest: "{{ destdir }}/fonts/Inconsolata.zip"
+         tags: [ dwm, st ]
+
+       - name: Downloading Liberation Mono Font
+         get_url: 
+            url: https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/LiberationMono.zip 
+            dest: "{{ destdir }}/fonts/LiberationMono.zip"
+         tags: [ dwm, st ]
+
+
+  - name: Installing packages
+    hosts: localhost
+    become: yes
+    vars:
+            ansible_python_interpreter: /usr/bin/python3
+    tasks:
+        - name: Installing dependencies
+          ansible.builtin.package:
+            name: 
+            - gcc
+            - git
+            - unzip
+            - feh
+            - light
+            - acpi
+            - stow
+            - xdotool
+            - golang-go
+            - libxft-dev
+            - libxinerama-dev
+            - libx11-xcb-dev
+            - libxcb-res0-dev
+            - libxext-dev
+            - libxcb1-dev
+            - libxcb-damage0-dev
+            - libxcb-xfixes0-dev
+            - libxcb-shape0-dev
+            - libxcb-render-util0-dev
+            - libxcb-render0-dev
+            - libxcb-randr0-dev
+            - libxcb-composite0-dev
+            - libxcb-image0-dev
+            - libxcb-present-dev
+            - libxcb-xinerama0-dev
+            - libxcb-glx0-dev
+            - libpixman-1-dev
+            - libdbus-1-dev
+            - libconfig-dev
+            - libgl1-mesa-dev
+            - libpcre2-dev
+            - libpcre3-dev
+            - libevdev-dev
+            - uthash-dev
+            - libev-dev
+            state: present
+
+        - name: Installing utilities
+          ansible.builtin.package:
+            name: 
+            - htop
+            - neofetch
+            - neovim
+            - fzf
+            - autojump
+            state: present
+          tags: utils
+
+
+  - name: dwm
+    hosts: localhost
+    become: yes
+    vars_files:
+        - vars.yaml
+    tasks:
+        - name: Compiling dwm
+          make:
+              chdir: "{{ destdir }}/dwm"
+              target: all
+
+        - name: Installing dwm
+          make:
+              chdir: "{{ destdir }}/dwm"
+              target: install
+
+        - name: Copying dwm desktop file
+          ansible.builtin.copy:
+              src: custom-dwm.desktop
+              dest: /usr/share/xsessions/custom-dwm.desktop
+
+        - name: Copying xinitrc
+          ansible.builtin.copy:
+              src: .xinitrc
+              dest: "{{ homedir }}/.xinitrc"
+              mode: '755'
+
+        - name: Linking ~/.xinitrc to ~/.xsession
+          file:
+              src: "{{ homedir }}/.xinitrc"
+              dest: "{{ homedir }}/.xsession" 
+              state: link
+    tags: dwm
+
+
+  - name: st
+    hosts: localhost
+    become: yes
+    vars_files:
+        - vars.yaml
+    tasks:
+        - name: Compiling st
+          make:
+              chdir: "{{ destdir }}/st"
+              target: all
+
+        - name: Installing st
+          make:
+              chdir: "{{ destdir }}/st"
+              target: install
+    tags: st
+
+
+  - name: dmenu
+    hosts: localhost
+    become: yes
+    vars_files:
+        - vars.yaml
+    tasks:
+        - name: Compiling dmenu
+          make:
+              chdir: "{{ destdir }}/dmenu"
+              target: all
+
+        - name: Installing dmenu
+          make:
+              chdir: "{{ destdir }}/dmenu"
+              target: install
+    tags: dmenu
