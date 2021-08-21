@@ -1,0 +1,3 @@
+---
+destdir: /tmp/test #all repos will be there
+homedir: /home/kali_us
