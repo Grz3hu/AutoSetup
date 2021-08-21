@@ -1,5 +1,5 @@
 #!/bin/bash
-#TODO: install autojump, fzf, st fonts
+#TODO: install autojump, fzf
 dep=(
 		gcc \
 		git \
@@ -14,6 +14,7 @@ dep=(
 		fzf \
 		meson \
 		ninja \
+		xdotool \
 		golang-go \
 		libxft-dev \
 		libxinerama-dev \
@@ -69,6 +70,7 @@ then
 	exit 
 fi
 
+
 #Dwm
 echo "Downloading dwm"
 git clone "https://github.com/Grz3hu/dwm.git" "$install_path/dwm"
@@ -83,20 +85,27 @@ ln -s ~/.xinitrc ~/.xsession
 chmod 755 ~/.xinitrc
 sudo cp custom-dwm.desktop /usr/share/xsessions/custom-dwm.desktop
 
+
 #Dotfiles
 echo "Downloading dotfiles"
 git clone "https://github.com/Grz3hu/Dotfiles.git" "$install_path/dotfiles"
 cd $install_path/dotfiles/ && stow aliases cava compton dunst feh i3 mutt ncmpcpp neofetch newsboat polybar ranger termite xresources zathura -t ~ 
 xrdb ~/.Xresources
 echo "source ~/.config/aliasrc" >> ~/.zshrc
-cd "$install_path"
-##Vimplug
+cd -
+
+
+#Vimplug
+sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+	       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+
 
 #Statusbar
 echo "Installing gocaudices (statusbar)"
 sudo cp -r gocaudices "$install_path/gocaudices"
 cd "$install_path/gocaudices" && go build . && cp gocaudices /usr/local/bin/gocaudices && cd -
 sudo cp statusbar/* /usr/local/bin/
+
 
 #Nerdfonts
 echo "Download nerdfonts"
@@ -106,18 +115,23 @@ sudo wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Liber
 sudo unzip Mononoki.zip -d "$install_path/nerd-font"
 sudo unzip LiberationMono.zip -d "$install_path/nerd-font"
 sudo unzip Inconsolata.zip -d "$install_path/nerd-font"
-sudo mv "$install_path/nerd-font/" "/usr/share/fonts/nerd-fonts"
+sudo mv "$install_path/nerd-font/*" "/usr/share/fonts/nerd-fonts/"
 sudo fc-cache -f -v
+
 
 #Terminal
 echo "Downloading st"
 git clone "https://github.com/Grz3hu/st.git" "$install_path/st"
-cd $install_path/st/ && ./compile && cd -
+cd $install_path/st/ && ./compile 
+sudo cp st-copyout st-urlhandler /usr/local/bin
+cd -
+
 
 #Dmenu
 echo "Downloading dmenu"
 git clone "https://github.com/Grz3hu/dmenu.git" "$install_path/dmenu"
 cd $install_path/dmenu/ && ./compile && cd -
+
 
 #picom
 echo "Downloading ibhagwan's picom fork"
